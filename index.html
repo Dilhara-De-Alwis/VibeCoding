@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Profile Card</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Design Tokens ─────────────────────────────────────── */
+    :root {
+      --c1: #6ee7f7;
+      --c2: #a78bfa;
+      --c3: #f0abfc;
+      --c4: #fb923c;
+      --glass-bg: rgba(255, 255, 255, 0.13);
+      --glass-border: rgba(255, 255, 255, 0.28);
+      --glass-shadow: 0 8px 32px rgba(100, 60, 200, 0.18),
+                      0 2px 8px rgba(0, 0, 0, 0.10),
+                      inset 0 1px 0 rgba(255,255,255,0.35);
+      --text-primary: #1a0a2e;
+      --text-secondary: #3d1f6b;
+      --text-muted: #7c5cbf;
+      --btn-shadow: 8px 8px 16px rgba(140,80,200,0.18), -4px -4px 10px rgba(255,255,255,0.7);
+      --btn-press: 2px 2px 6px rgba(140,80,200,0.25), -1px -1px 4px rgba(255,255,255,0.5);
+      --ease-elastic: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+      --t-fast: 220ms;
+      --t-mid: 400ms;
+      --t-slow: 600ms;
+      --radius-card: 28px;
+      --font-display: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+
+    /* Dark mode */
+    [data-theme="dark"] {
+      --glass-bg: rgba(20, 8, 40, 0.55);
+      --glass-border: rgba(180, 140, 255, 0.18);
+      --glass-shadow: 0 8px 40px rgba(60, 0, 120, 0.45),
+                      0 2px 8px rgba(0, 0, 0, 0.40),
+                      inset 0 1px 0 rgba(255,255,255,0.10);
+      --text-primary: #f0e8ff;
+      --text-secondary: #c4b5fd;
+      --text-muted: #a78bfa;
+      --btn-shadow: 5px 5px 14px rgba(0,0,0,0.5), -3px -3px 8px rgba(140,80,255,0.15);
+      --btn-press: 2px 2px 5px rgba(0,0,0,0.55), -1px -1px 4px rgba(140,80,255,0.10);
+    }
+
+    /* ─── Reset & Base ──────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; }
+
+    body {
+      min-height: 100%;
+      font-family: var(--font-body);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      overflow-x: hidden;
+      transition: background 0.7s var(--ease-smooth);
+      position: relative;
+    }
+
+    /* ─── Animated Mesh Background ─────────────────────────── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, var(--c1), transparent 60%),
+        radial-gradient(ellipse 70% 70% at 80% 20%, var(--c2), transparent 55%),
+        radial-gradient(ellipse 90% 50% at 60% 80%, var(--c3), transparent 60%),
+        radial-gradient(ellipse 60% 80% at 10% 85%, var(--c4), transparent 55%),
+        #f3e8ff;
+      animation: meshShift 15s ease-in-out infinite alternate;
+      filter: hue-rotate(0deg);
+    }
+
+    [data-theme="dark"] body::before {
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, #1a0550, transparent 60%),
+        radial-gradient(ellipse 70% 70% at 80% 20%, #2d0a6e, transparent 55%),
+        radial-gradient(ellipse 90% 50% at 60% 80%, #3b0764, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 10% 85%, #1e063b, transparent 55%),
+        #0d0118;
+    }
+
+    @keyframes meshShift {
+      0%   { filter: hue-rotate(0deg)   saturate(1.0) brightness(1.0); }
+      33%  { filter: hue-rotate(20deg)  saturate(1.15) brightness(1.05); }
+      66%  { filter: hue-rotate(-15deg) saturate(1.2)  brightness(0.98); }
+      100% { filter: hue-rotate(30deg)  saturate(1.1)  brightness(1.02); }
+    }
+
+    /* Noise grain overlay for depth */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      background-size: 180px;
+      pointer-events: none;
+      opacity: 0.45;
+    }
+
+    /* ─── Dark Mode Toggle ──────────────────────────────────── */
+    .dm-toggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      background: var(--glass-bg);
+      backdrop-filter: blur(14px) saturate(180%);
+      -webkit-backdrop-filter: blur(14px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all var(--t-fast) var(--ease-smooth);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      letter-spacing: 0.02em;
+    }
+    .dm-toggle:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+    .dm-toggle:focus-visible { outline: 2px solid var(--c2); outline-offset: 3px; }
+
+    .dm-icon { font-size: 1rem; transition: transform 0.4s var(--ease-elastic); }
+    .dm-toggle:hover .dm-icon { transform: rotate(25deg) scale(1.2); }
+
+    /* ─── Loading Skeleton ──────────────────────────────────── */
+    .skeleton-wrap {
+      max-width: 400px;
+      width: 100%;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      padding: 36px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+    }
+    .skel {
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.15) 25%,
+        rgba(255,255,255,0.35) 50%,
+        rgba(255,255,255,0.15) 75%);
+      background-size: 200% 100%;
+      border-radius: 12px;
+      animation: skelShimmer 1.4s infinite;
+    }
+    .skel-avatar { width: 120px; height: 120px; border-radius: 50%; }
+    .skel-line   { height: 14px; }
+    .skel-w100   { width: 100%; }
+    .skel-w70    { width: 70%; }
+    .skel-w50    { width: 50%; }
+    @keyframes skelShimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* ─── Profile Card ──────────────────────────────────────── */
+    .profile-card {
+      max-width: 400px;
+      width: 100%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-card);
+      box-shadow: var(--glass-shadow);
+      padding: 40px 36px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      will-change: transform;
+      transition: box-shadow 0.3s var(--ease-smooth);
+
+      /* Initial hidden state for entrance animation */
+      opacity: 0;
+      transform: scale(0.9);
+      animation: cardEnter 0.5s var(--ease-elastic) 0s forwards;
+    }
+
+    /* Subtle inner highlight */
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      border-radius: 1px;
+    }
+
+    /* ─── Entrance Animations ───────────────────────────────── */
+    @keyframes cardEnter {
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: scale(0.5); }
+      70%  { transform: scale(1.08); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes slideUp {
+      0%   { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes bounceIn {
+      0%   { opacity: 0; transform: scale(0.4) translateY(12px); }
+      60%  { transform: scale(1.12) translateY(-4px); }
+      80%  { transform: scale(0.96) translateY(2px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes fadeSlideUp {
+      0%   { opacity: 0; transform: translateY(14px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-10px); }
+    }
+    @keyframes spinBorder {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* ─── Avatar ────────────────────────────────────────────── */
+    .avatar-wrapper {
+      position: relative;
+      width: 120px;
+      height: 120px;
+      margin-bottom: 22px;
+      opacity: 0;
+      animation: popIn 0.55s var(--ease-elastic) 0.2s forwards;
+    }
+
+    /* Rotating gradient ring */
+    .avatar-ring {
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 0deg,
+        #6ee7f7, #a78bfa, #f0abfc, #fb923c, #6ee7f7
+      );
+      animation: spinBorder 4s linear infinite;
+      z-index: 0;
+    }
+
+    /* Masking inner circle so ring is only visible as border */
+    .avatar-ring::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      background: var(--glass-bg);
+      backdrop-filter: blur(6px);
+    }
+
+    .avatar-img {
+      position: relative;
+      z-index: 1;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      background: linear-gradient(135deg, #6ee7f7 0%, #a78bfa 50%, #f0abfc 100%);
+      border: 3px solid rgba(255,255,255,0.5);
+      animation: float 5s ease-in-out infinite;
+      letter-spacing: -0.02em;
+      user-select: none;
+    }
+
+    /* ─── Status Dot ────────────────────────────────────────── */
+    .status-dot {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      z-index: 2;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #22d3ee;
+      border: 3px solid rgba(255,255,255,0.8);
+      box-shadow: 0 0 0 0 rgba(34,211,238,0.5);
+      animation: pulse 2.5s cubic-bezier(0.4,0,0.6,1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.5); }
+      50%       { box-shadow: 0 0 0 7px rgba(34,211,238,0); }
+    }
+
+    /* ─── Name & Stream ─────────────────────────────────────── */
+    .student-name {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 40%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+      opacity: 0;
+      animation: slideUp 0.5s var(--ease-elastic) 0.4s forwards;
+    }
+
+    [data-theme="dark"] .student-name {
+      background: linear-gradient(135deg, #c4b5fd 0%, #a5b4fc 40%, #67e8f9 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+
+    .stream-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 14px 5px 10px;
+      border-radius: 50px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(10px) saturate(160%);
+      border: 1px solid rgba(255,255,255,0.35);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(100,60,200,0.1);
+      opacity: 0;
+      animation: bounceIn 0.6s var(--ease-elastic) 0.5s forwards;
+    }
+
+    [data-theme="dark"] .stream-badge {
+      background: rgba(100,60,200,0.2);
+      border-color: rgba(180,140,255,0.2);
+      color: var(--text-secondary);
+    }
+
+    .stream-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: linear-gradient(135deg, #a78bfa, #6ee7f7);
+      flex-shrink: 0;
+    }
+
+    /* ─── Stats Row ─────────────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 1px;
+      width: 100%;
+      margin-bottom: 22px;
+      border-radius: 16px;
+      overflow: hidden;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--glass-border);
+      opacity: 0;
+      animation: fadeSlideUp 0.5s var(--ease-smooth) 0.55s forwards;
+    }
+
+    .stat-item {
+      flex: 1;
+      padding: 14px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      position: relative;
+      transition: background var(--t-fast) var(--ease-smooth);
+    }
+    .stat-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 20%; bottom: 20%;
+      width: 1px;
+      background: var(--glass-border);
+    }
+    .stat-item:hover { background: rgba(255,255,255,0.1); }
+
+    .stat-value {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+    .stat-label {
+      font-size: 0.68rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    /* ─── Bio ───────────────────────────────────────────────── */
+    .bio-text {
+      font-size: 0.95rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      margin-bottom: 24px;
+      font-weight: 300;
+      opacity: 0;
+      animation: fadeSlideUp 0.6s var(--ease-smooth) 0.6s forwards;
+    }
+
+    /* ─── Social Icons ──────────────────────────────────────── */
+    .social-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 26px;
+      opacity: 0;
+      animation: fadeSlideUp 0.5s var(--ease-smooth) 0.72s forwards;
+    }
+
+    .social-btn {
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid var(--glass-border);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: transform var(--t-fast) var(--ease-elastic),
+                  background var(--t-fast),
+                  box-shadow var(--t-fast);
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 1.05rem;
+    }
+    .social-btn:hover {
+      transform: translateY(-5px) scale(1.08);
+      background: rgba(255,255,255,0.3);
+      box-shadow: 0 8px 20px rgba(100,60,200,0.18);
+      color: var(--text-primary);
+    }
+    .social-btn:focus-visible {
+      outline: 2px solid var(--c2);
+      outline-offset: 3px;
+    }
+
+    /* ─── Connect Button ────────────────────────────────────── */
+    .connect-btn {
+      width: 100%;
+      padding: 14px 0;
+      border-radius: 16px;
+      border: none;
+      background: rgba(255,255,255,0.22);
+      backdrop-filter: blur(10px);
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      box-shadow: var(--btn-shadow);
+      transition: transform var(--t-fast) var(--ease-elastic),
+                  box-shadow var(--t-fast),
+                  background var(--t-fast);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeSlideUp 0.5s var(--ease-smooth) 0.85s forwards;
+    }
+
+    .connect-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(167,139,250,0.3), rgba(110,231,247,0.2));
+      opacity: 0;
+      transition: opacity var(--t-fast);
+    }
+
+    .connect-btn:hover {
+      transform: scale(1.04) translateY(-2px);
+      box-shadow: 10px 10px 22px rgba(140,80,200,0.22), -5px -5px 14px rgba(255,255,255,0.75),
+                  0 0 30px rgba(167,139,250,0.3);
+    }
+    .connect-btn:hover::before { opacity: 1; }
+    .connect-btn:active {
+      transform: scale(0.97) translateY(1px);
+      box-shadow: var(--btn-press);
+    }
+    .connect-btn:focus-visible {
+      outline: 2px solid var(--c2);
+      outline-offset: 3px;
+    }
+
+    .btn-icon { font-size: 1.1rem; position: relative; z-index: 1; }
+    .btn-label { position: relative; z-index: 1; }
+
+    /* ─── Confetti Canvas ───────────────────────────────────── */
+    #confetti-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* ─── Responsive ────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .profile-card {
+        border-radius: 20px;
+        padding: 28px 20px 24px;
+      }
+      .avatar-wrapper { width: 80px; height: 80px; margin-bottom: 16px; }
+      .avatar-img     { width: 80px; height: 80px; font-size: 1.5rem; }
+      .avatar-ring    { inset: -3px; }
+      .avatar-ring::after { inset: 3px; }
+      .student-name   { font-size: 1.55rem; }
+      .stat-value     { font-size: 1.05rem; }
+      .profile-card:hover { transform: none !important; }
+    }
+
+    @media (min-width: 481px) and (max-width: 768px) {
+      .avatar-wrapper { width: 100px; height: 100px; }
+      .avatar-img     { width: 100px; height: 100px; font-size: 1.9rem; }
+      .avatar-ring::after { inset: 3.5px; }
+    }
+
+    /* ─── Reduced Motion ────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .profile-card { opacity: 1; transform: none; }
+      .avatar-wrapper, .student-name, .stream-badge,
+      .stats-row, .bio-text, .social-row, .connect-btn { opacity: 1; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Dark Mode Toggle -->
+  <button class="dm-toggle" id="dmToggle" aria-label="Toggle dark mode">
+    <span class="dm-icon" id="dmIcon">☀️</span>
+    <span id="dmLabel">Light</span>
+  </button>
+
+  <!-- Loading Skeleton -->
+  <div class="skeleton-wrap" id="skeleton" aria-hidden="true" role="presentation">
+    <div class="skel skel-avatar"></div>
+    <div class="skel skel-line skel-w50"></div>
+    <div class="skel skel-line skel-w70"></div>
+    <div class="skel skel-line skel-w100"></div>
+    <div class="skel skel-line skel-w100"></div>
+  </div>
+
+  <!-- Profile Card (hidden until skeleton done) -->
+  <article class="profile-card" id="profileCard" aria-label="Student profile card" style="display:none;">
+
+    <!-- Avatar -->
+    <figure class="avatar-wrapper" role="img" aria-label="Profile photo of Alex Reyes">
+      <div class="avatar-ring" aria-hidden="true"></div>
+      <div class="avatar-img" id="avatarEl" aria-hidden="true">AR</div>
+      <div class="status-dot" title="Online" aria-label="Online status"></div>
+    </figure>
+
+    <!-- Name -->
+    <h1 class="student-name" id="studentName">Alex Reyes</h1>
+
+    <!-- Stream Badge -->
+    <div class="stream-badge" role="status" aria-label="Academic stream: Computer Science">
+      <div class="stream-dot" aria-hidden="true"></div>
+      Computer Science
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row" role="list" aria-label="Student statistics">
+      <div class="stat-item" role="listitem">
+        <span class="stat-value">3.9</span>
+        <span class="stat-label">GPA</span>
+      </div>
+      <div class="stat-item" role="listitem">
+        <span class="stat-value">12</span>
+        <span class="stat-label">Projects</span>
+      </div>
+      <div class="stat-item" role="listitem">
+        <span class="stat-value">4th</span>
+        <span class="stat-label">Year</span>
+      </div>
+    </div>
+
+    <!-- Bio -->
+    <p class="bio-text">
+      Passionate about building human-centered technology and exploring the intersection of
+      AI and creative expression. Currently researching generative models at the campus AI Lab. ☕ + code = happiness.
+    </p>
+
+    <!-- Social Icons -->
+    <div class="social-row" role="list" aria-label="Social links">
+      <a href="#" class="social-btn" aria-label="GitHub profile" role="listitem">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.6v-2c-3.2.7-3.9-1.5-3.9-1.5-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.1.1 1.7 1.1 1.7 1.1 1 1.7 2.6 1.2 3.2.9.1-.7.4-1.2.7-1.5-2.5-.3-5.2-1.3-5.2-5.7 0-1.3.5-2.3 1.2-3.2-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0c2.3-1.5 3.3-1.2 3.3-1.2.7 1.6.3 2.8.1 3.1.8.9 1.2 1.9 1.2 3.2 0 4.5-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6C20.2 21.4 23.5 17.1 23.5 12 23.5 5.7 18.3.5 12 .5Z"/>
+        </svg>
+      </a>
+      <a href="#" class="social-btn" aria-label="LinkedIn profile" role="listitem">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.5 2h-17A1.5 1.5 0 0 0 2 3.5v17A1.5 1.5 0 0 0 3.5 22h17a1.5 1.5 0 0 0 1.5-1.5v-17A1.5 1.5 0 0 0 20.5 2ZM8 19H5v-9h3ZM6.5 8.25A1.75 1.75 0 1 1 8.25 6.5 1.75 1.75 0 0 1 6.5 8.25ZM19 19h-3v-4.75c0-1.4-.6-1.9-1.38-1.9A1.74 1.74 0 0 0 13 14.19V19h-3v-9h2.9v1.3a3.11 3.11 0 0 1 2.7-1.4c1.55 0 3.36.86 3.36 3.66Z"/>
+        </svg>
+      </a>
+      <a href="#" class="social-btn" aria-label="Portfolio website" role="listitem">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+      </a>
+      <a href="#" class="social-btn" aria-label="Email Alex Reyes" role="listitem">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- Connect Button -->
+    <button class="connect-btn" id="connectBtn" aria-label="Connect with Alex Reyes">
+      <span class="btn-icon" aria-hidden="true">✦</span>
+      <span class="btn-label">Connect</span>
+    </button>
+
+  </article>
+
+  <!-- Confetti Canvas -->
+  <canvas id="confetti-canvas" aria-hidden="true"></canvas>
+
+  <script>
+    /* ─── Skeleton → Card reveal ─────────────────────────── */
+    window.addEventListener('DOMContentLoaded', () => {
+      const skeleton = document.getElementById('skeleton');
+      const card     = document.getElementById('profileCard');
+
+      setTimeout(() => {
+        skeleton.style.transition = 'opacity 0.4s ease';
+        skeleton.style.opacity    = '0';
+        setTimeout(() => {
+          skeleton.style.display = 'none';
+          card.style.display = 'flex';
+        }, 400);
+      }, 900);
+    });
+
+    /* ─── Dark Mode Toggle ───────────────────────────────── */
+    const dmToggle = document.getElementById('dmToggle');
+    const dmIcon   = document.getElementById('dmIcon');
+    const dmLabel  = document.getElementById('dmLabel');
+    let dark = false;
+
+    dmToggle.addEventListener('click', () => {
+      dark = !dark;
+      document.documentElement.setAttribute('data-theme', dark ? 'dark' : '');
+      dmIcon.textContent  = dark ? '🌙' : '☀️';
+      dmLabel.textContent = dark ? 'Dark' : 'Light';
+    });
+
+    /* ─── 3D Tilt on Mouse Move ──────────────────────────── */
+    const card = document.getElementById('profileCard');
+    const isMobile = () => window.innerWidth < 481;
+
+    card.addEventListener('mousemove', (e) => {
+      if (isMobile()) return;
+      const rect = card.getBoundingClientRect();
+      const cx   = rect.left + rect.width  / 2;
+      const cy   = rect.top  + rect.height / 2;
+      const dx   = (e.clientX - cx) / (rect.width  / 2);
+      const dy   = (e.clientY - cy) / (rect.height / 2);
+      const rotX = -dy * 5;
+      const rotY =  dx * 5;
+      card.style.transform =
+        `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(1.02,1.02,1.02)`;
+      card.style.transition = 'transform 0.1s linear';
+    });
+
+    card.addEventListener('mouseleave', () => {
+      card.style.transform  = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)';
+      card.style.transition = 'transform 0.5s cubic-bezier(0.4,0,0.2,1)';
+    });
+
+    /* ─── Confetti on Connect Click ──────────────────────── */
+    const connectBtn = document.getElementById('connectBtn');
+    const canvas     = document.getElementById('confetti-canvas');
+    const ctx        = canvas.getContext('2d');
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    class Particle {
+      constructor(x, y) {
+        this.x    = x;
+        this.y    = y;
+        this.vx   = (Math.random() - 0.5) * 10;
+        this.vy   = (Math.random() - 2.5)  * 8;
+        this.color = ['#6ee7f7','#a78bfa','#f0abfc','#fb923c','#fde68a','#6ee7b7'][
+          Math.floor(Math.random() * 6)
+        ];
+        this.size  = Math.random() * 8 + 4;
+        this.alpha = 1;
+        this.decay = Math.random() * 0.012 + 0.008;
+        this.shape = Math.random() > 0.5 ? 'circle' : 'rect';
+        this.rot   = Math.random() * Math.PI * 2;
+        this.rotV  = (Math.random() - 0.5) * 0.25;
+      }
+      update() {
+        this.x    += this.vx;
+        this.vy   += 0.28;           /* gravity */
+        this.y    += this.vy;
+        this.alpha -= this.decay;
+        this.rot  += this.rotV;
+      }
+      draw(c) {
+        c.save();
+        c.globalAlpha = Math.max(0, this.alpha);
+        c.fillStyle   = this.color;
+        c.translate(this.x, this.y);
+        c.rotate(this.rot);
+        if (this.shape === 'circle') {
+          c.beginPath();
+          c.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+          c.fill();
+        } else {
+          c.fillRect(-this.size/2, -this.size/4, this.size, this.size/2);
+        }
+        c.restore();
+      }
+      dead() { return this.alpha <= 0; }
+    }
+
+    let particles = [];
+    let animId    = null;
+
+    function spawnBurst(x, y, count = 90) {
+      for (let i = 0; i < count; i++) particles.push(new Particle(x, y));
+    }
+
+    function runConfetti() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles = particles.filter(p => !p.dead());
+      particles.forEach(p => { p.update(); p.draw(ctx); });
+      if (particles.length > 0) {
+        animId = requestAnimationFrame(runConfetti);
+      } else {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        animId = null;
+      }
+    }
+
+    connectBtn.addEventListener('click', (e) => {
+      const r = connectBtn.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top;
+      if (animId) cancelAnimationFrame(animId);
+      particles = [];
+      spawnBurst(cx, cy, 100);
+      runConfetti();
+
+      /* Button label feedback */
+      const label = connectBtn.querySelector('.btn-label');
+      const icon  = connectBtn.querySelector('.btn-icon');
+      label.textContent = 'Connected!';
+      icon.textContent  = '✓';
+      connectBtn.style.background = 'rgba(110,231,247,0.25)';
+      setTimeout(() => {
+        label.textContent = 'Connect';
+        icon.textContent  = '✦';
+        connectBtn.style.background = '';
+      }, 2200);
+    });
+
+    /* ─── Intersection Observer for future extension ─────── */
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '';
+          entry.target.style.transform = '';
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    observer.observe(card);
+  </script>
+</body>
+</html>
